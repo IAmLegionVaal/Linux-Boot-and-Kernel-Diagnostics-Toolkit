@@ -1,50 +1,64 @@
 # Linux Boot and Kernel Diagnostics Toolkit
 
-A read-only Bash toolkit for investigating slow boots, failed units, kernel warnings, driver problems, initramfs issues, GRUB context, firmware messages, and previous-boot failures.
+A Linux support toolkit for investigating boot and kernel problems and applying selected guarded repairs.
 
-## Checks performed
-
-- Distribution, kernel, uptime, boot ID, and kernel command line
-- `systemd-analyze` time, blame, and critical-chain evidence
-- Failed units and boot targets
-- Current and previous boot errors
-- Kernel warnings, taint state, loaded modules, and module failures
-- Initramfs and GRUB file inventory
-- Firmware, ACPI, storage, network-driver, and out-of-memory indicators
-- Boot history from `journalctl --list-boots`
-- Text, CSV, and JSON reports
-
-## Usage
+## Diagnostic script
 
 ```bash
 chmod +x src/boot_kernel_diagnostics.sh
 sudo ./src/boot_kernel_diagnostics.sh
 ```
 
-Review a wider log window:
+The diagnostic script collects boot timing, failed units, kernel warnings, loaded modules, initramfs and GRUB context, firmware messages and previous-boot errors.
+
+## Repair script
+
+Preview a repair:
 
 ```bash
-sudo ./src/boot_kernel_diagnostics.sh --hours 72 --output /tmp/boot-diagnostics
+chmod +x src/boot_kernel_repair.sh
+sudo ./src/boot_kernel_repair.sh --rebuild-initramfs --dry-run
 ```
 
-## Safety
+Rebuild initramfs images:
 
-The toolkit does not rebuild initramfs, update GRUB, load or unload modules, change kernel parameters, edit bootloader files, or reboot the host.
+```bash
+sudo ./src/boot_kernel_repair.sh --rebuild-initramfs
+```
 
-## Requirements
+Regenerate GRUB configuration:
 
-- Bash 4+
-- A `systemd`-based Linux distribution for complete boot timing evidence
-- Root privileges for complete kernel and journal access
+```bash
+sudo ./src/boot_kernel_repair.sh --update-bootloader
+```
 
-## Validation ideas
+Repair one boot-related service:
 
-- Healthy boot
-- Failed service during startup
-- Slow startup unit
-- Previous boot with kernel errors
-- Missing driver or firmware warning
-- Non-systemd host to confirm graceful degradation
+```bash
+sudo ./src/boot_kernel_repair.sh --service NetworkManager-wait-online.service
+```
+
+Enable and start the selected service while repairing it:
+
+```bash
+sudo ./src/boot_kernel_repair.sh \
+  --service example.service \
+  --enable-service
+```
+
+## What the repair does
+
+- Clears stale failed-unit state.
+- Reloads systemd and repairs one selected boot-related service.
+- Rebuilds initramfs using the installed distribution tool.
+- Regenerates GRUB using the installed distribution tool and detected configuration path.
+- Captures boot, kernel, service and `/boot` state before and after repair.
+- Backs up `/etc/default/grub` when present.
+- Supports dry-run, confirmation prompts, logs and clear exit codes.
+
+## Safety and limitations
+
+Initramfs and bootloader repairs can affect the next boot. Maintain console or recovery access and verify backups before use. The tool does not change kernel command-line parameters, remove kernels, install drivers or reboot automatically.
 
 ## Author
 
