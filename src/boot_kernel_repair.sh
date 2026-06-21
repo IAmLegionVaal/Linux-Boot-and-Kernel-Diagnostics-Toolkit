@@ -45,7 +45,7 @@ done
 if ! $REBUILD_INITRAMFS && ! $UPDATE_BOOTLOADER && [ -z "$SERVICE" ] && ! $RESET_FAILED; then echo "Choose at least one repair action." >&2; exit 2; fi
 command -v systemctl >/dev/null 2>&1 || { echo "systemd is required." >&2; exit 3; }
 if [ -n "$SERVICE" ]; then systemctl cat "$SERVICE" >/dev/null 2>&1 || { echo "Unit not found: $SERVICE" >&2; exit 2; }; fi
-$ENABLE_SERVICE && [ -n "$SERVICE" ] || { $ENABLE_SERVICE || true; }
+if $ENABLE_SERVICE && [ -z "$SERVICE" ]; then echo "--enable-service requires --service UNIT." >&2; exit 2; fi
 
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUTPUT_DIR="${OUTPUT_DIR:-./boot-kernel-repair-$STAMP}"
