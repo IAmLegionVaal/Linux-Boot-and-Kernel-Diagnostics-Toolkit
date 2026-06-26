@@ -61,7 +61,14 @@ confirm() { $ASSUME_YES && return 0; read -r -p "$1 [y/N]: " answer; case "$answ
 run_action() {
   local description="$1"; shift
   ACTIONS=$((ACTIONS + 1)); log "$description"
-  if $DRY_RUN; then printf 'DRY-RUN:' >> "$LOG"; printf ' %q' "$@" >> "$LOG"; printf '\n' >> "$LOG"; return 0; fi
+  if $DRY_RUN; then
+    {
+      printf 'DRY-RUN:'
+      printf ' %q' "$@"
+      printf '\n'
+    } >> "$LOG"
+    return 0
+  fi
   if "$@" >> "$LOG" 2>&1; then log "SUCCESS: $description"; return 0; fi
   FAILURES=$((FAILURES + 1)); log "WARNING: $description failed"; return 1
 }
@@ -85,7 +92,9 @@ collect_state() {
 }
 
 collect_state "$BEFORE"
-[ -f /etc/default/grub ] && cp -a /etc/default/grub "$BACKUP_DIR/grub-default" 2>/dev/null || true
+if [ -f /etc/default/grub ]; then
+  cp -a /etc/default/grub "$BACKUP_DIR/grub-default" 2>/dev/null || true
+fi
 confirm "Apply the selected boot and kernel repair actions? A reboot may be required afterward." || { log "Repair cancelled."; exit 10; }
 
 if $RESET_FAILED; then run_root "Clearing failed systemd unit state" systemctl reset-failed || true; fi
