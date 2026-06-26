@@ -57,7 +57,7 @@ if have systemctl; then
   section "Failed units" systemctl --failed --no-pager -l
   systemctl --failed --no-legend --plain 2>/dev/null | while read -r unit load active sub description; do
     [[ -z "$unit" ]] && continue
-    description="${description//"/""}"
+    description="${description//\"/\"\"}"
     printf '"%s","%s","%s","%s","%s"\n' "$unit" "$load" "$active" "$sub" "$description" >> "$CSV"
   done
   section "Default target" systemctl get-default
